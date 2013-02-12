@@ -3,6 +3,8 @@ package storm.kafka.trident;
 import backtype.storm.Config;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Fields;
+
+import java.lang.System;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,22 +20,22 @@ import storm.trident.topology.TransactionAttempt;
 
 
 public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<Map<String, List>, GlobalPartitionId, Map> {
-    
+
     TridentKafkaConfig _config;
     String _topologyInstanceId = UUID.randomUUID().toString();
 
-    
+
     public TransactionalTridentKafkaSpout(TridentKafkaConfig config) {
         _config = config;
     }
-    
+
     class Coordinator implements IPartitionedTridentSpout.Coordinator<Map> {
         IBrokerReader reader;
-        
+
         public Coordinator(Map conf) {
             reader = KafkaUtils.makeBrokerReader(conf, _config);
         }
-        
+
         @Override
         public void close() {
             _config.coordinator.close();
@@ -49,19 +51,22 @@ public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<
            return reader.getCurrentBrokers();
         }
     }
-    
+
     class Emitter implements IPartitionedTridentSpout.Emitter<Map<String, List>, GlobalPartitionId, Map> {
         DynamicPartitionConnections _connections;
         String _topologyName;
-        
+
         public Emitter(Map conf) {
             _connections = new DynamicPartitionConnections(_config);
             _topologyName = (String) conf.get(Config.TOPOLOGY_NAME);
         }
-        
+
         @Override
         public Map emitPartitionBatchNew(TransactionAttempt attempt, TridentCollector collector, GlobalPartitionId partition, Map lastMeta) {
             SimpleConsumer consumer = _connections.register(partition);
+
+            System.out.println("TransactionalTridentKafkaSpout:emitPartitionBatchNew emitting partition batch new for tx "
+                    + attempt.getTransactionId() + " from partition on " + partition.getId());
 
             return KafkaUtils.emitPartitionBatchNew(_config, consumer, partition, collector, lastMeta, _topologyInstanceId, _topologyName);
         }
@@ -73,6 +78,8 @@ public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<
                 SimpleConsumer consumer = _connections.register(partition);
                 long offset = (Long) meta.get("offset");
                 long nextOffset = (Long) meta.get("nextOffset");
+                System.out.println("TransactionalTridentKafkaSpout:emitPartitionBatch fetching batch from " + partition.getId()
+                        + " for tx " + attempt.getTransactionId() + " between " + offset + " and " + nextOffset);
                 ByteBufferMessageSet msgs = consumer.fetch(new FetchRequest(_config.topic, partition.partition, offset, _config.fetchSizeBytes));
                 for(MessageAndOffset msg: msgs) {
                     if(offset == nextOffset) break;

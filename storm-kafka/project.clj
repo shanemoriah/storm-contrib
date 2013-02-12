@@ -1,4 +1,4 @@
-(defproject storm/storm-kafka "0.9.0-wip15-scala292"
+(defproject storm/storm-kafka "0.9.0-wip15-scala292-ntropy"
   :source-path "src/clj"
   :java-source-path "src/jvm"
   :javac-options {:debug "true" :fork "true"}

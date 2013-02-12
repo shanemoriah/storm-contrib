@@ -1,5 +1,6 @@
 package storm.kafka.trident;
 
+import java.lang.System;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,11 +66,16 @@ public class KafkaUtils {
          }
          ByteBufferMessageSet msgs;
          try {
-            msgs = consumer.fetch(new FetchRequest(config.topic, partition.partition, offset, config.fetchSizeBytes));
+             System.out.println("KafkaUtils:emitPartitionBatchNew checking on " + partition.getId()
+                     + " from " + offset + " to " + (offset + config.fetchSizeBytes));
+             msgs = consumer.fetch(new FetchRequest(config.topic, partition.partition, offset, config.fetchSizeBytes));
+             System.out.println("msgs: " + msgs);
          } catch(Exception e) {
              if(e instanceof ConnectException) {
+                 System.out.println(e);
                  throw new FailedFetchException(e);
              } else {
+                 System.out.println(e);
                  throw new RuntimeException(e);
              }
          }
