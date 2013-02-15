@@ -1,5 +1,7 @@
 package storm.kafka;
 
+import java.lang.String;
+import java.lang.System;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,6 +31,7 @@ public class DynamicPartitionConnections {
     }
     
     public SimpleConsumer register(HostPort host, int partition) {
+        System.out.println(String.format("DynamicPartitionConnections:Getting a Simple Consumer for %s:%d and partition %d", host.host, host.port, partition));
         if(!_connections.containsKey(host)) {
             _connections.put(host, new ConnectionInfo(new SimpleConsumer(host.host, host.port, _config.socketTimeoutMs, _config.bufferSizeBytes)));
         }

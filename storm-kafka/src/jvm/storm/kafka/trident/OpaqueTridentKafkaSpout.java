@@ -4,6 +4,8 @@ import backtype.storm.Config;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Fields;
 import com.google.common.collect.ImmutableMap;
+
+import java.lang.System;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +86,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<M
         public Map emitPartitionBatch(TransactionAttempt attempt, TridentCollector collector, GlobalPartitionId partition, Map lastMeta) {
             try {
                 SimpleConsumer consumer = _connections.register(partition);
+                System.out.println("OpaqueTridentKafkaSpout getting a SimpleConsumer with partition " + partition.partition  + " and transactionid " + attempt.getTransactionId() + " and attemptid " + attempt.getAttemptId());
                 return KafkaUtils.emitPartitionBatchNew(_config, consumer, partition, collector, lastMeta, _topologyInstanceId, _topologyName);
             } catch(FailedFetchException e) {
                 LOG.warn("Failed to fetch from partition " + partition);

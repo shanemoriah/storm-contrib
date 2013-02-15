@@ -32,7 +32,7 @@ public class KafkaUtils {
         }
     }
 
-    public static List<GlobalPartitionId> getOrderedPartitions(Map<String, List> partitions) {
+        public static List<GlobalPartitionId> getOrderedPartitions(Map<String, List> partitions) {
         List<GlobalPartitionId> ret = new ArrayList();
         for(String host: new TreeMap<String, List>(partitions).keySet()) {
             List info = partitions.get(host);
@@ -69,7 +69,7 @@ public class KafkaUtils {
              System.out.println("KafkaUtils:emitPartitionBatchNew checking on " + partition.getId()
                      + " from " + offset + " to " + (offset + config.fetchSizeBytes));
              msgs = consumer.fetch(new FetchRequest(config.topic, partition.partition, offset, config.fetchSizeBytes));
-             System.out.println("msgs: " + msgs);
+             //System.out.println("msgs: " + msgs);
          } catch(Exception e) {
              if(e instanceof ConnectException) {
                  System.out.println(e);

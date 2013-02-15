@@ -3,7 +3,8 @@
   :java-source-path "src/jvm"
   :javac-options {:debug "true" :fork "true"}
   :repositories {"conjars" "http://conjars.org/repo/"}
-  :dependencies [[com.twitter/kafka_2.9.2 "0.7.0"
+  :dependencies [[org.scala-lang/scala-library "2.9.2"]
+                  [com.twitter/kafka_2.9.2 "0.7.0"
                   :exclusions [org.apache.zookeeper/zookeeper
                                log4j/log4j]]]
   :dev-dependencies [[storm "0.9.0-wip15"]
