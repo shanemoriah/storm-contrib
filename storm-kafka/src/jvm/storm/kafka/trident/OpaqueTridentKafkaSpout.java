@@ -4,8 +4,6 @@ import backtype.storm.Config;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Fields;
 import com.google.common.collect.ImmutableMap;
-
-import java.lang.System;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,8 +84,10 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<M
         public Map emitPartitionBatch(TransactionAttempt attempt, TridentCollector collector, GlobalPartitionId partition, Map lastMeta) {
             try {
                 SimpleConsumer consumer = _connections.register(partition);
-                System.out.println("OpaqueTridentKafkaSpout getting a SimpleConsumer with partition " + partition.partition  + " and transactionid " + attempt.getTransactionId() + " and attemptid " + attempt.getAttemptId());
-                return KafkaUtils.emitPartitionBatchNew(_config, consumer, partition, collector, lastMeta, _topologyInstanceId, _topologyName);
+                Map ret = KafkaUtils.emitPartitionBatchNew(_config, consumer, partition, collector, lastMeta, _topologyInstanceId, _topologyName);
+                System.out.println(String.format("CONTRIB/OpaqueTridentKafkaSpout: PARTITION: %s, OFFSET: %d, NEXTOFFSET %d, TRANSACTION ID: %d, ATTEMPT ID: %d",
+                        partition.partition, ret.get("offset"), ret.get("nextOffset"), attempt.getTransactionId(), attempt.getAttemptId()));
+                return ret;
             } catch(FailedFetchException e) {
                 LOG.warn("Failed to fetch from partition " + partition);
                 if(lastMeta==null) {
@@ -99,8 +99,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<M
                     ret.put("partition", partition.partition);
                     ret.put("broker", ImmutableMap.of("host", partition.host.host, "port", partition.host.port));
                     ret.put("topic", _config.topic);
-                    ret.put("topology", ImmutableMap.of("name", _topologyName, "id", _topologyInstanceId));                    
-                    
+                    ret.put("topology", ImmutableMap.of("name", _topologyName, "id", _topologyInstanceId));
                     return ret;
                 }
             }

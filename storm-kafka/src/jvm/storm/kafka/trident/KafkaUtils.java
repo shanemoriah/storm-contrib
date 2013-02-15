@@ -32,7 +32,7 @@ public class KafkaUtils {
         }
     }
 
-        public static List<GlobalPartitionId> getOrderedPartitions(Map<String, List> partitions) {
+    public static List<GlobalPartitionId> getOrderedPartitions(Map<String, List> partitions) {
         List<GlobalPartitionId> ret = new ArrayList();
         for(String host: new TreeMap<String, List>(partitions).keySet()) {
             List info = partitions.get(host);
@@ -49,6 +49,11 @@ public class KafkaUtils {
      public static Map emitPartitionBatchNew(TridentKafkaConfig config, SimpleConsumer consumer, GlobalPartitionId partition, TridentCollector collector, Map lastMeta, String topologyInstanceId, String topologyName) {
          long offset;
          if(lastMeta!=null) {
+             //System.out.println(String.format("------------------------------------------"));
+             //for (Object key: lastMeta.keySet()) {
+             //    System.out.println(String.format("KEY: %s, VALUE: %s, PARTITION: %s", key, lastMeta.get(key), partition.getId()));
+             //}
+             //System.out.println(String.format("------------------------------------------"));
              String lastInstanceId = null;
              Map lastTopoMeta = (Map) lastMeta.get("topology");
              if(lastTopoMeta!=null) {
@@ -66,27 +71,27 @@ public class KafkaUtils {
          }
          ByteBufferMessageSet msgs;
          try {
-             System.out.println("KafkaUtils:emitPartitionBatchNew checking on " + partition.getId()
-                     + " from " + offset + " to " + (offset + config.fetchSizeBytes));
-             msgs = consumer.fetch(new FetchRequest(config.topic, partition.partition, offset, config.fetchSizeBytes));
-             //System.out.println("msgs: " + msgs);
+            System.out.println(String.format("KafkaUtils: Partition: %s, Offset: %d", partition.getId(), offset));
+            msgs = consumer.fetch(new FetchRequest(config.topic, partition.partition, offset, config.fetchSizeBytes));
          } catch(Exception e) {
              if(e instanceof ConnectException) {
-                 System.out.println(e);
                  throw new FailedFetchException(e);
              } else {
-                 System.out.println(e);
                  throw new RuntimeException(e);
              }
          }
          long endoffset = offset;
+         int count = 0;
          for(MessageAndOffset msg: msgs) {
              emit(config, collector, msg.message());
              endoffset = msg.offset();
+             count++;
          }
+         System.out.println(String .format("KafkaUtils: GOT %d OBJS: PARTITION: %s:%s", count, partition.host.host, partition.partition));
          Map newMeta = new HashMap();
          newMeta.put("offset", offset);
          newMeta.put("nextOffset", endoffset);
+         System.out.println(String.format("KafkaUtils: NEW NEXTOFFSET: %d", endoffset));
          newMeta.put("instanceId", topologyInstanceId);
          newMeta.put("partition", partition.partition);
          newMeta.put("broker", ImmutableMap.of("host", partition.host.host, "port", partition.host.port));
